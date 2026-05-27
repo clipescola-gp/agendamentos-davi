@@ -48,9 +48,9 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
 <div class="wrap">
   <div id="s1" class="card">
     <div class="ttl">Qual tipo de reuniao deseja agendar?</div>
-    <div class="tc" data-id="mt1" data-dur="120" data-name="Reunião de Treinamento"><span class="tn">Reunião de Treinamento</span><span class="td">(2 horas)</span></div>
-    <div class="tc" data-id="mt2" data-dur="60" data-name="Reunião de Alinhamento"><span class="tn">Reunião de Alinhamento</span><span class="td">(1 hora)</span></div>
-    <button class="btn" id="btn1" disabled>Proximo</button>
+    <div class="tc" data-id="mt1" data-dur="120" data-name="Reunião de Treinamento" onclick="pickType(this)"><span class="tn">Reunião de Treinamento</span><span class="td">(2 horas)</span></div>
+    <div class="tc" data-id="mt2" data-dur="60" data-name="Reunião de Alinhamento" onclick="pickType(this)"><span class="tn">Reunião de Alinhamento</span><span class="td">(1 hora)</span></div>
+    <button class="btn" id="btn1" disabled onclick="if(!this.disabled){show('s2');checkAndRenderMonth()}">Proximo</button>
   </div>
   <div id="s2" class="card hd">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -100,6 +100,12 @@ var DL=["domingo","segunda-feira","terca-feira","quarta-feira","quinta-feira","s
 function fD(m){var h=Math.floor(m/60),r=m%60;return r?h+"h"+r+"min":h+" hora"+(h>1?"s":"")}
 function aM(t,m){var p=t.split(":"),v=+p[0]*60+ +p[1]+m;return ("0"+Math.floor(v/60)).slice(-2)+":"+("0"+(v%60)).slice(-2)}
 function show(id){["s1","s2","s3","succ"].forEach(function(s){document.getElementById(s).classList.add("hd")});document.getElementById(id).classList.remove("hd")}
+function pickType(el){
+  document.querySelectorAll(".tc").forEach(function(x){x.classList.remove("sel")});
+  el.classList.add("sel");
+  typeId=el.dataset.id;typeDur=+el.dataset.dur;typeName=el.dataset.name;
+  document.getElementById("btn1").disabled=false;
+}
 function checkAndRenderMonth(){
   var wrap=document.getElementById("cal-wrap");
   wrap.innerHTML="<div class='loading'>&#9203; Verificando disponibilidade do mes...</div>";
@@ -218,17 +224,6 @@ function confirmar(){
   .catch(function(){er.textContent="Erro ao enviar. Tente novamente.";er.style.display="block";btn.disabled=false;btn.textContent="Confirmar agendamento";});
 }
 document.addEventListener("DOMContentLoaded",function(){
-  document.querySelectorAll(".tc").forEach(function(d){
-    d.addEventListener("click",function(){
-      document.querySelectorAll(".tc").forEach(function(x){x.classList.remove("sel")});
-      this.classList.add("sel");
-      typeId=this.dataset.id;typeDur=+this.dataset.dur;typeName=this.dataset.name;
-      document.getElementById("btn1").disabled=false;
-    });
-  });
-  document.getElementById("btn1").addEventListener("click",function(){
-    if(!this.disabled){show("s2");checkAndRenderMonth();}
-  });
   document.getElementById("btn2").addEventListener("click",function(){
     if(!this.disabled){
       show("s3");
