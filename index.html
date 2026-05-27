@@ -37,7 +37,7 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
 .frow{display:flex;flex-direction:column;gap:12px}
 .cnav{display:flex;gap:6px;align-items:center}
 .cnav button{padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;font-family:inherit}
-.rebanner{background:#fffbeb;border:2px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;font-weight:600}
+.loading{text-align:center;padding:24px 0;color:#6b7280;font-size:13px}
 </style>
 </head>
 <body>
@@ -46,7 +46,6 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
   <div class="hr"><div class="hn">Davi Morais</div><div class="hs">Customer Success Manager</div></div>
 </div>
 <div class="wrap">
-  <div id="rebanner" class="rebanner hd">🔄 Voce esta reagendando. Seus dados ja estao preenchidos - escolha nova data e horario.</div>
   <div id="s1" class="card">
     <div class="ttl">Qual tipo de reuniao deseja agendar?</div>
     <div id="type-list"></div>
@@ -54,15 +53,15 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
   </div>
   <div id="s2" class="card hd">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="ttl" style="margin:0" id="s2t">Escolha a data e horario</div>
+      <div class="ttl" style="margin:0">Escolha a data e horario</div>
       <div class="cnav"><button id="prev-m">&#8249;</button><span id="cal-lbl" style="font-size:13px;font-weight:700;min-width:110px;text-align:center"></span><button id="next-m">&#8250;</button></div>
     </div>
-    <div id="cal"></div>
+    <div id="cal-wrap"></div>
     <div id="tw" class="hd" style="margin-top:16px"><div id="tl" style="font-size:13px;font-weight:700;color:#6b7280;margin-bottom:8px"></div><div id="times" style="display:flex;flex-wrap:wrap;gap:4px"></div></div>
     <div style="display:flex;gap:10px;margin-top:16px"><button class="back" id="back2">&#8592; Voltar</button><button class="btn" id="btn2" disabled>Proximo</button></div>
   </div>
   <div id="s3" class="card hd">
-    <div class="ttl" id="s3t">Preencha seus dados</div>
+    <div class="ttl">Preencha seus dados</div>
     <div class="info" id="ibar"></div>
     <div class="frow">
       <div><label>Nome da Escola *</label><input id="fi-school" placeholder="Ex: Colegio Sao Paulo"></div>
@@ -72,11 +71,11 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
       <div><label>Outros participantes (opcional)</label><input id="fi-guests" placeholder="e-mails separados por virgula"></div>
     </div>
     <div id="ferr" class="err">Preencha todos os campos obrigatorios.</div>
-    <div style="display:flex;gap:10px;margin-top:16px"><button class="back" id="back3">&#8592; Voltar</button><button class="btn" id="btn3">&#10003; Confirmar agendamento</button></div>
+    <div style="display:flex;gap:10px;margin-top:16px"><button class="back" id="back3">&#8592; Voltar</button><button class="btn" id="btn3">Confirmar agendamento</button></div>
   </div>
   <div id="succ" class="succ hd">
-    <div style="font-size:44px;margin-bottom:10px" id="succ-icon">&#9989;</div>
-    <div style="font-size:18px;font-weight:800;color:#057a55;margin-bottom:6px" id="succ-title">Reuniao agendada com sucesso!</div>
+    <div style="font-size:44px;margin-bottom:10px">&#9989;</div>
+    <div style="font-size:18px;font-weight:800;color:#057a55;margin-bottom:6px">Reuniao agendada com sucesso!</div>
     <div id="sd" style="color:#6b7280;font-size:14px"></div>
     <p style="margin-top:6px;color:#6b7280;font-size:13px">Voce recebera um convite no e-mail em breve.</p>
     <button class="btn" style="margin-top:16px" id="succ-btn">Novo agendamento</button>
@@ -93,8 +92,7 @@ var CSM_E="davimorais.clipescola@gmail.com";
 var CSM_ICS="https://calendar.google.com/calendar/ical/davimorais.clipescola%40gmail.com/private-1ccf5f12744f25f3550b7c92bccf36b2/basic.ics";
 var SHEET="1rwNkmBUlOjfUHbIbHpyHiLfou8tYyJfQbZtz0dwjgwA";
 var cy=new Date().getFullYear(),cm=new Date().getMonth();
-var selDate="",selTime="",typeId="",typeName="",typeDur=0,oldEventId="",isRe=false;
-var SLA_HOURS=48;
+var selDate="",selTime="",typeId="",typeName="",typeDur=0;
 var MONTHS=["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 var DS=["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
 var DL=["domingo","segunda-feira","terca-feira","quarta-feira","quinta-feira","sexta-feira","sabado"];
@@ -116,22 +114,48 @@ function buildTypes(){
     el.appendChild(d);
   });
 }
-function renderCal(){
+function checkAndRenderMonth(){
+  var wrap=document.getElementById("cal-wrap");
+  wrap.innerHTML="<div class='loading'>&#9203; Verificando disponibilidade do mes...</div>";
+  document.getElementById("tw").classList.add("hd");
+  selDate="";selTime="";
+  document.getElementById("btn2").disabled=true;
+  var pad=function(n){return ("0"+n).slice(-2)};
+  var daysInMonth=new Date(cy,cm+1,0).getDate();
+  var promises=[];
+  for(var d=1;d<=daysInMonth;d++){
+    var dt=new Date(cy,cm,d);
+    var dow=dt.getDay();
+    var daySlots=(SBT[typeId]||[]).filter(function(s){return s.day===dow});
+    if(!daySlots.length)continue;
+    var iso=cy+"-"+pad(cm+1)+"-"+pad(d);
+    (function(iso2,ds){
+      promises.push(
+        fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso2,duration:typeDur,slots:ds,slaHours:48})})
+        .then(function(r){return r.json()})
+        .then(function(data){return{iso:iso2,free:(data.slots||[]).length>0}})
+        .catch(function(){return{iso:iso2,free:true}})
+      );
+    })(iso,daySlots);
+  }
+  Promise.all(promises).then(function(results){
+    var freeDays={};
+    results.forEach(function(r){if(r.free)freeDays[r.iso]=true});
+    renderCal(freeDays);
+  });
+}
+function renderCal(freeDays){
   document.getElementById("cal-lbl").textContent=MONTHS[cm].charAt(0).toUpperCase()+MONTHS[cm].slice(1)+" "+cy;
-  var slots=SBT[typeId]||[],wds=[];
-  slots.forEach(function(s){if(wds.indexOf(s.day)<0)wds.push(s.day)});
-  var today=new Date();today.setHours(0,0,0,0);
   var first=new Date(cy,cm,1).getDay(),days=new Date(cy,cm+1,0).getDate();
-  var cal=document.getElementById("cal");cal.innerHTML="";
+  var today=new Date();today.setHours(0,0,0,0);
   var grid=document.createElement("div");grid.className="cal";
   DS.forEach(function(d){var h=document.createElement("div");h.style.cssText="text-align:center;font-size:11px;font-weight:700;color:#6b7280;padding:4px 0";h.textContent=d;grid.appendChild(h)});
-  for(var i=0;i<first;i++){var e=document.createElement("div");grid.appendChild(e)}
+  for(var i=0;i<first;i++){grid.appendChild(document.createElement("div"))}
   for(var d=1;d<=days;d++){
     var dt=new Date(cy,cm,d);
     var iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
     var isT=dt.getTime()===today.getTime();
-    var minDate=new Date(today.getTime()+SLA_HOURS*60*60*1000);
-    var av=wds.indexOf(dt.getDay())>=0&&dt>=minDate;
+    var av=freeDays&&freeDays[iso];
     var cell=document.createElement("div");
     cell.className="cc"+(iso===selDate?" sl":isT?" td2":av?" av":" em");
     cell.textContent=d;
@@ -142,20 +166,23 @@ function renderCal(){
     }
     grid.appendChild(cell);
   }
-  cal.appendChild(grid);
-  document.getElementById("tw").classList.add("hd");
+  var wrap=document.getElementById("cal-wrap");
+  wrap.innerHTML="";wrap.appendChild(grid);
 }
 function pickDate(iso,dow){
   selDate=iso;selTime="";
   document.getElementById("btn2").disabled=true;
-  renderCal();
+  document.querySelectorAll(".cc").forEach(function(c){c.classList.remove("sl")});
+  var cells=document.querySelectorAll(".cc");
+  cells.forEach(function(c){if(c.textContent==String(+iso.split("-")[2])&&c.classList.contains("av"))c.classList.add("sl")});
   document.getElementById("tw").classList.remove("hd");
   var dt=new Date(iso+"T12:00:00");
-  document.getElementById("tl").textContent="Verificando disponibilidade...";
+  document.getElementById("tl").textContent="Carregando horarios...";
   document.getElementById("times").innerHTML="";
   var daySlots=(SBT[typeId]||[]).filter(function(s){return s.day===dow});
   fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso,duration:typeDur,slots:daySlots,slaHours:48})})
-  .then(function(r){return r.json()}).then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
+  .then(function(r){return r.json()})
+  .then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
   .catch(function(){renderTimes(daySlots.map(function(s){return s.time}),dt);});
 }
 function renderTimes(free,dt){
@@ -182,49 +209,23 @@ function confirmar(){
   if(!s||!c||!e||!p){er.style.display="block";return;}
   er.style.display="none";
   var btn=document.getElementById("btn3");btn.disabled=true;btn.textContent="Aguarde...";
-  var payload={
-    csm:CSM_N,
-    csmEmail:CSM_E,
-    icsUrl:CSM_ICS,
-    sheetId:SHEET,
-    date:selDate,
-    time:selTime,
-    endTime:aM(selTime,typeDur),
-    meetingType:typeName,
-    duration:typeDur,
-    school:s,
-    contact:c,
-    email:e,
-    phone:p,
-    guests:g
-  };
-  if(isRe)payload.oldEventId=oldEventId;
-  fetch(isRe?WR:WA,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload)
-  })
-  .then(function(r){return r.json();})
+  var payload={csm:CSM_N,csmEmail:CSM_E,icsUrl:CSM_ICS,sheetId:SHEET,date:selDate,time:selTime,endTime:aM(selTime,typeDur),meetingType:typeName,duration:typeDur,school:s,contact:c,email:e,phone:p,guests:g};
+  fetch(WA,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+  .then(function(r){return r.json()})
   .then(function(resp){
     show("succ");
-    document.getElementById("rebanner").classList.add("hd");
     var dt=new Date(selDate+"T12:00:00");
     var meetHtml="";
-    if(resp && resp.meetLink){
-      meetHtml="<br><br><a href='"+resp.meetLink+"' target='_blank' style='display:inline-block;margin-top:8px;padding:10px 20px;background:#22367b;color:#fff;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none'>&#128247; Abrir Google Meet</a>";
-    }
-    document.getElementById("sd").innerHTML="<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>Data: "+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" as "+selTime+" - "+fD(typeDur)+meetHtml;
+    if(resp&&resp.meetLink){meetHtml="<br><br><a href='"+resp.meetLink+"' target='_blank' style='display:inline-block;margin-top:8px;padding:10px 20px;background:#22367b;color:#fff;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none'>Abrir Google Meet</a>";}
+    document.getElementById("sd").innerHTML="<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>"+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" as "+selTime+" - "+fD(typeDur)+meetHtml;
   })
-  .catch(function(){
-    er.textContent="Erro ao enviar. Tente novamente.";
-    er.style.display="block";
-    btn.disabled=false;
-    btn.textContent=isRe?"Confirmar reagendamento":"Confirmar agendamento";
-  });
+  .catch(function(){er.textContent="Erro ao enviar. Tente novamente.";er.style.display="block";btn.disabled=false;btn.textContent="Confirmar agendamento";});
 }
 document.addEventListener("DOMContentLoaded",function(){
   buildTypes();
-  document.getElementById("btn1").addEventListener("click",function(){if(!this.disabled)show("s2");renderCal()});
+  document.getElementById("btn1").addEventListener("click",function(){
+    if(!this.disabled){show("s2");checkAndRenderMonth();}
+  });
   document.getElementById("btn2").addEventListener("click",function(){
     if(!this.disabled){
       show("s3");
@@ -234,28 +235,10 @@ document.addEventListener("DOMContentLoaded",function(){
   });
   document.getElementById("btn3").addEventListener("click",confirmar);
   document.getElementById("back2").addEventListener("click",function(){show("s1")});
-  document.getElementById("back3").addEventListener("click",function(){show("s2");renderCal()});
-  document.getElementById("prev-m").addEventListener("click",function(){cm--;if(cm<0){cm=11;cy--;}renderCal()});
-  document.getElementById("next-m").addEventListener("click",function(){cm++;if(cm>11){cm=0;cy++;}renderCal()});
+  document.getElementById("back3").addEventListener("click",function(){show("s2");checkAndRenderMonth();});
+  document.getElementById("prev-m").addEventListener("click",function(){cm--;if(cm<0){cm=11;cy--;}checkAndRenderMonth();});
+  document.getElementById("next-m").addEventListener("click",function(){cm++;if(cm>11){cm=0;cy++;}checkAndRenderMonth();});
   document.getElementById("succ-btn").addEventListener("click",function(){location.href=location.pathname});
-  var params=new URLSearchParams(window.location.search);
-  if(params.get("reschedule")==="1"){
-    isRe=true;oldEventId=params.get("eventId")||"";
-    var mt=params.get("meetingType")||"";
-    document.getElementById("rebanner").classList.remove("hd");
-    document.getElementById("s2t").textContent="Escolha a nova data e horario";
-    document.getElementById("s3t").textContent="Confirme seus dados";
-    document.getElementById("btn3").textContent="Confirmar reagendamento";
-    document.getElementById("succ-icon").textContent="🔄";
-    document.getElementById("succ-title").textContent="Reuniao reagendada com sucesso!";
-    document.getElementById("succ-btn").style.display="none";
-    document.getElementById("back2").style.display="none";
-    ["school","contact","email","phone","guests"].forEach(function(k){
-      var el=document.getElementById("fi-"+k);if(el)el.value=decodeURIComponent(params.get(k)||"");
-    });
-    MTYPES.forEach(function(t){if(t.label===mt){typeId=t.id;typeDur=t.duration;typeName=t.label;}});
-    show("s2");renderCal();
-  }
 });
 </script>
 </body>
