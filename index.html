@@ -154,7 +154,7 @@ function pickDate(iso,dow){
   document.getElementById("tl").textContent="Verificando disponibilidade...";
   document.getElementById("times").innerHTML="";
   var daySlots=(SBT[typeId]||[]).filter(function(s){return s.day===dow});
-  fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso,duration:typeDur,slots:daySlots})})
+  fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso,duration:typeDur,slots:daySlots,slaHours:48})})
   .then(function(r){return r.json()}).then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
   .catch(function(){renderTimes(daySlots.map(function(s){return s.time}),dt);});
 }
