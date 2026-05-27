@@ -183,8 +183,11 @@ function renderTimes(free,dt){
   document.getElementById("tl").textContent="Horários — "+DL[dt.getDay()]+", "+dt.getDate()+" de "+MONTHS[dt.getMonth()];
   if(free.length===0){document.getElementById("times").innerHTML="<span style='color:#dc2626;font-size:13px'>Nenhum horário disponível. Escolha outra data.</span>";return;}
   var h="";
-  free.forEach(function(t){var e=aM(t,typeDur);h+="<div class='ts' onclick="pickTime('"+t+"',this)">"+t+" <span style='font-size:11px;opacity:.7'>até "+e+"</span></div>";});
+  free.forEach(function(t){var e=aM(t,typeDur);h+="<div class='ts' data-time='"+t+"'>"+t+" <span style='font-size:11px;opacity:.7'>até "+e+"</span></div>";});
   document.getElementById("times").innerHTML=h;
+  document.querySelectorAll(".ts").forEach(function(el){
+    el.addEventListener("click",function(){ pickTime(this.dataset.time,this); });
+  });
 }
 function pickTime(t,el){selTime=t;document.querySelectorAll(".ts").forEach(function(e){e.classList.remove("sl")});el.classList.add("sl");document.getElementById("btn2").classList.remove("off");}
 function prevM(){cm--;if(cm<0){cm=11;cy--;}renderCal();}
