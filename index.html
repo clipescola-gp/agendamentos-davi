@@ -83,6 +83,7 @@ input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;f
 </div>
 <script>
 var MTYPES=[{"id":"mt1","label":"Reunião de Treinamento","duration":120},{"id":"mt2","label":"Reunião de Alinhamento","duration":60}];
+if(!MTYPES||!MTYPES.length){MTYPES=[{id:"mt1",label:"Reuniao de Treinamento",duration:120},{id:"mt2",label:"Reuniao de Alinhamento",duration:60}];}
 var SBT={"mt1":[{"day":1,"time":"09:30"},{"day":1,"time":"14:30"},{"day":2,"time":"09:00"},{"day":2,"time":"14:30"},{"day":3,"time":"09:30"},{"day":3,"time":"14:30"},{"day":4,"time":"09:00"},{"day":4,"time":"14:30"},{"day":5,"time":"09:30"},{"day":5,"time":"14:00"}],"mt2":[{"day":1,"time":"09:30"},{"day":1,"time":"14:30"},{"day":2,"time":"09:00"},{"day":2,"time":"14:30"},{"day":3,"time":"09:30"},{"day":3,"time":"14:30"},{"day":4,"time":"09:00"},{"day":4,"time":"14:30"},{"day":5,"time":"09:30"},{"day":5,"time":"14:00"}]};
 var WV="https://n8n.clipescola.com.br/webhook/verificar-csm";
 var WA="https://n8n.clipescola.com.br/webhook/agendar-csm";
