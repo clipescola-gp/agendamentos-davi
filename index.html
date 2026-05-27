@@ -154,12 +154,17 @@ function renderCal(){
     var dt=new Date(cy,cm,d),iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
     var isT=dt.getTime()===today.getTime(),av=wds.indexOf(dt.getDay())>=0&&dt>=today;
     var cls="cc"+(iso===selDate?" sl":isT?" td":av?" av":" em");
-    var oc=av?"onclick="pickDate('"+iso+"',"+dt.getDay()+")"":"";
-    h+="<div class='"+cls+"' "+oc+">"+d+"</div>";
+    h+="<div class='"+cls+"' data-iso='"+iso+"' data-dow='"+dt.getDay()+"'>"+d+"</div>";
   }
   h+="</div>";
   document.getElementById("cal").innerHTML=h;
   document.getElementById("tw").classList.add("hd");
+  bindCal();
+}
+function bindCal(){
+  document.querySelectorAll("#cal .cc.av").forEach(function(el){
+    el.addEventListener("click",function(){ pickDate(this.dataset.iso,+this.dataset.dow); });
+  });
 }
 function pickDate(iso,dow){
   selDate=iso;selTime="";
