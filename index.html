@@ -94,6 +94,7 @@ var CSM_ICS="https://calendar.google.com/calendar/ical/davimorais.clipescola%40g
 var SHEET="1rwNkmBUlOjfUHbIbHpyHiLfou8tYyJfQbZtz0dwjgwA";
 var cy=new Date().getFullYear(),cm=new Date().getMonth();
 var selDate="",selTime="",typeId="",typeName="",typeDur=0,oldEventId="",isRe=false;
+var SLA_HOURS=48;
 var MONTHS=["janeiro","fevereiro","marco","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 var DS=["Dom","Seg","Ter","Qua","Qui","Sex","Sab"];
 var DL=["domingo","segunda-feira","terca-feira","quarta-feira","quinta-feira","sexta-feira","sabado"];
@@ -128,7 +129,9 @@ function renderCal(){
   for(var d=1;d<=days;d++){
     var dt=new Date(cy,cm,d);
     var iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
-    var isT=dt.getTime()===today.getTime(),av=wds.indexOf(dt.getDay())>=0&&dt>=today;
+    var isT=dt.getTime()===today.getTime();
+    var minDate=new Date(today.getTime()+SLA_HOURS*60*60*1000);
+    var av=wds.indexOf(dt.getDay())>=0&&dt>=minDate;
     var cell=document.createElement("div");
     cell.className="cc"+(iso===selDate?" sl":isT?" td2":av?" av":" em");
     cell.textContent=d;
@@ -179,16 +182,45 @@ function confirmar(){
   if(!s||!c||!e||!p){er.style.display="block";return;}
   er.style.display="none";
   var btn=document.getElementById("btn3");btn.disabled=true;btn.textContent="Aguarde...";
-  var payload={csm:CSM_N,csmEmail:CSM_E,icsUrl:CSM_ICS,sheetId:SHEET,date:selDate,time:selTime,endTime:aM(selTime,typeDur),meetingType:typeName,duration:typeDur,school:s,contact:c,email:e,phone:p,guests:g};
+  var payload={
+    csm:CSM_N,
+    csmEmail:CSM_E,
+    icsUrl:CSM_ICS,
+    sheetId:SHEET,
+    date:selDate,
+    time:selTime,
+    endTime:aM(selTime,typeDur),
+    meetingType:typeName,
+    duration:typeDur,
+    school:s,
+    contact:c,
+    email:e,
+    phone:p,
+    guests:g
+  };
   if(isRe)payload.oldEventId=oldEventId;
-  fetch(isRe?WR:WA,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
-  .then(function(){
+  fetch(isRe?WR:WA,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload)
+  })
+  .then(function(r){return r.json();})
+  .then(function(resp){
     show("succ");
     document.getElementById("rebanner").classList.add("hd");
     var dt=new Date(selDate+"T12:00:00");
-    document.getElementById("sd").innerHTML="<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>Data: "+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" as "+selTime+" - "+fD(typeDur);
+    var meetHtml="";
+    if(resp && resp.meetLink){
+      meetHtml="<br><br><a href='"+resp.meetLink+"' target='_blank' style='display:inline-block;margin-top:8px;padding:10px 20px;background:#22367b;color:#fff;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none'>&#128247; Abrir Google Meet</a>";
+    }
+    document.getElementById("sd").innerHTML="<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>Data: "+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" as "+selTime+" - "+fD(typeDur)+meetHtml;
   })
-  .catch(function(){er.textContent="Erro ao enviar. Tente novamente.";er.style.display="block";btn.disabled=false;btn.textContent=isRe?"Confirmar reagendamento":"Confirmar agendamento";});
+  .catch(function(){
+    er.textContent="Erro ao enviar. Tente novamente.";
+    er.style.display="block";
+    btn.disabled=false;
+    btn.textContent=isRe?"Confirmar reagendamento":"Confirmar agendamento";
+  });
 }
 document.addEventListener("DOMContentLoaded",function(){
   buildTypes();
