@@ -107,29 +107,15 @@ var DS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 var DL=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
 function fD(m){var h=Math.floor(m/60),r=m%60;return r?h+"h"+r+"min":h+" hora"+(h>1?"s":"")}
 function aM(t,m){var p=t.split(":"),v=+p[0]*60+ +p[1]+m;return ("0"+Math.floor(v/60)).slice(-2)+":"+("0"+(v%60)).slice(-2)}
-
-// Lê URL params para reagendamento
 (function(){
   var p=new URLSearchParams(window.location.search);
   if(p.get("reschedule")==="1"){
-    isRe=true; oldEventId=p.get("eventId")||"";
+    isRe=true;oldEventId=p.get("eventId")||"";
     var mt=p.get("meetingType")||"";
-    // Pré-seleciona o tipo pelo nome
-    document.querySelectorAll(".tc").forEach(function(el){
-      if(el.querySelector(".tn").textContent===mt){ el.classList.add("sl"); }
-    });
-    // Descobre id/dur do tipo
-    Object.keys(SBT).forEach(function(id){
-      var el=document.getElementById("tc-"+id);
-      if(el&&el.querySelector(".tn").textContent===mt){ typeId=id; typeName=mt; }
-    });
-    // Tenta pegar duração do data-dur
-    var tc=document.querySelector(".tc.sl");
-    if(tc){ typeDur=+tc.getAttribute("data-dur")||60; }
-    // Preenche campos
-    ["school","contact","email","phone","guests"].forEach(function(k){
-      var el=document.getElementById("fi-"+k);if(el)el.value=decodeURIComponent(p.get(k)||"");
-    });
+    document.querySelectorAll(".tc").forEach(function(el){if(el.querySelector(".tn").textContent===mt)el.classList.add("sl");});
+    Object.keys(SBT).forEach(function(id){var el=document.getElementById("tc-"+id);if(el&&el.querySelector(".tn").textContent===mt){typeId=id;typeName=mt;}});
+    var tc=document.querySelector(".tc.sl");if(tc)typeDur=+tc.dataset.dur||60;
+    ["school","contact","email","phone","guests"].forEach(function(k){var el=document.getElementById("fi-"+k);if(el)el.value=decodeURIComponent(p.get(k)||"");});
     document.getElementById("re-banner").classList.remove("hd");
     document.getElementById("s2-title").textContent="Escolha a nova data e horário";
     document.getElementById("s3-title").textContent="Confirme seus dados";
@@ -141,7 +127,6 @@ function aM(t,m){var p=t.split(":"),v=+p[0]*60+ +p[1]+m;return ("0"+Math.floor(v
     goStep(2);
   }
 })();
-
 function pickType(id,dur,name){
   document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("sl")});
   var el=document.getElementById("tc-"+id);if(el)el.classList.add("sl");
@@ -159,18 +144,15 @@ function goStep(n){
 }
 function renderCal(){
   document.getElementById("cal-lbl").textContent=MONTHS[cm].charAt(0).toUpperCase()+MONTHS[cm].slice(1)+" "+cy;
-  var slots=SBT[typeId]||[];
-  var wds=[...new Set(slots.map(function(s){return s.day}))];
+  var slots=SBT[typeId]||[],wds=[...new Set(slots.map(function(s){return s.day}))];
   var today=new Date();today.setHours(0,0,0,0);
   var first=new Date(cy,cm,1).getDay(),days=new Date(cy,cm+1,0).getDate();
   var h="<div class='cal'>";
   DS.forEach(function(d){h+="<div style='text-align:center;font-size:11px;font-weight:700;color:#6b7280;padding:4px 0'>"+d+"</div>"});
   for(var i=0;i<first;i++)h+="<div></div>";
   for(var d=1;d<=days;d++){
-    var dt=new Date(cy,cm,d);
-    var iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
-    var isT=dt.getTime()===today.getTime();
-    var av=wds.indexOf(dt.getDay())>=0&&dt>=today;
+    var dt=new Date(cy,cm,d),iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
+    var isT=dt.getTime()===today.getTime(),av=wds.indexOf(dt.getDay())>=0&&dt>=today;
     var cls="cc"+(iso===selDate?" sl":isT?" td":av?" av":" em");
     var oc=av?"onclick="pickDate('"+iso+"',"+dt.getDay()+")"":"";
     h+="<div class='"+cls+"' "+oc+">"+d+"</div>";
@@ -183,14 +165,13 @@ function pickDate(iso,dow){
   selDate=iso;selTime="";
   document.getElementById("btn2").classList.add("off");
   renderCal();
-  var tw=document.getElementById("tw");tw.classList.remove("hd");
+  document.getElementById("tw").classList.remove("hd");
   var dt=new Date(iso+"T12:00:00");
   document.getElementById("tl").textContent="⏳ Verificando disponibilidade...";
   document.getElementById("times").innerHTML="";
   var daySlots=(SBT[typeId]||[]).filter(function(s){return s.day===dow});
   fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso,duration:typeDur,slots:daySlots})})
-  .then(function(r){return r.json()})
-  .then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
+  .then(function(r){return r.json()}).then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
   .catch(function(){renderTimes(daySlots.map(function(s){return s.time}),dt);});
 }
 function renderTimes(free,dt){
@@ -210,7 +191,7 @@ function confirmar(){
   er.style.display="none";
   var btn=document.getElementById("btn3");btn.disabled=true;btn.textContent="Aguarde...";
   var payload={csm:CSM_N,csmEmail:CSM_E,icsUrl:CSM_ICS,sheetId:SHEET,date:selDate,time:selTime,endTime:aM(selTime,typeDur),meetingType:typeName,duration:typeDur,school:s,contact:c,email:e,phone:p,guests:g};
-  if(isRe) payload.oldEventId=oldEventId;
+  if(isRe)payload.oldEventId=oldEventId;
   fetch(isRe?WR:WA,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
   .then(function(){
     ["s1","s2","s3"].forEach(function(x){document.getElementById(x).classList.add("hd")});
