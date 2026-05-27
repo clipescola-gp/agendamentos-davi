@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agendar Reunião — Davi Morais</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:#f0f2f7;min-height:100vh}
+.hdr{background:#22367b;padding:0 32px;display:flex;align-items:center;justify-content:space-between;min-height:72px}
+.hdr img{height:40px;object-fit:contain}
+.hdr-r{text-align:right}.hdr-name{color:#fff;font-weight:800;font-size:17px;line-height:1.2}
+.hdr-sub{color:rgba(255,255,255,.75);font-size:13px;margin-top:2px}
+.body{max-width:700px;margin:0 auto;padding:28px 16px}
+.card{background:#fff;border-radius:12px;padding:22px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sec{font-size:15px;font-weight:800;color:#22367b;margin-bottom:14px}
+label{font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+input{width:100%;padding:9px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;outline:none}
+.btn{display:inline-block;padding:11px 22px;border-radius:8px;border:none;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit;background:#22367b;color:#fff}
+.btn.off{opacity:.4;cursor:default;pointer-events:none}
+.back{padding:10px 20px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;font-weight:700;font-size:14px;font-family:inherit;color:#6b7280}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;font-weight:500;cursor:default;border:2px solid transparent;user-select:none}
+.cc.av{background:#f0fdf4;color:#166534;cursor:pointer;font-weight:700}.cc.av:hover{background:#dcfce7}
+.cc.sl{background:#22367b!important;color:#fff!important;border-color:#22367b!important;font-weight:800}
+.cc.td{background:#eff6ff;color:#22367b;border-color:#bfdbfe;font-weight:700}
+.cc.em{color:#d1d5db}
+.times{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ts{padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;background:#f0f9ff;color:#0369a1;border:2px solid #bae6fd;font-family:inherit;user-select:none}
+.ts.sl{background:#22367b;color:#fff;border-color:#22367b}
+.tc{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;margin-bottom:8px;border:2px solid #e5e7eb;cursor:pointer;user-select:none}
+.tc.sl{border-color:#22367b;background:#eff6ff}.tc .tn{font-weight:700;font-size:14px;color:#374151}.tc.sl .tn{color:#22367b}
+.tc .td2{font-size:13px;color:#6b7280;white-space:nowrap;margin-left:12px}
+.info{background:#eff6ff;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#22367b;font-weight:600}
+.re-banner{background:#fffbeb;border:2px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;font-weight:600}
+.success{background:#ecfdf5;border:2px solid #6ee7b7;border-radius:12px;padding:32px;text-align:center}
+.err{color:#dc2626;font-size:13px;margin-top:10px;display:none}
+.hd{display:none}
+.frow{display:flex;flex-direction:column;gap:12px}
+.cal-nav{display:flex;gap:6px;align-items:center}
+.cal-nav button{padding:5px 10px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <img src="https://i.imgur.com/IVPOWqc.png" alt="ClipEscola" onerror="this.style.display='none'">
+  <div class="hdr-r"><div class="hdr-name">Davi Morais</div><div class="hdr-sub">Customer Success Manager</div></div>
+</div>
+<div class="body">
+  <div id="re-banner" class="re-banner hd">🔄 Você está reagendando sua reunião. Seus dados já estão preenchidos — só escolha a nova data e horário.</div>
+  <div id="s1" class="card">
+    <div class="sec">Qual tipo de reunião deseja agendar?</div>
+    <div class="tc" id="tc-mt1" onclick="pickType('mt1',120,'Reunião de Treinamento')"><span class="tn">Reunião de Treinamento</span><span class="td2">(2 horas)</span></div><div class="tc" id="tc-mt2" onclick="pickType('mt2',60,'Reunião de Alinhamento')"><span class="tn">Reunião de Alinhamento</span><span class="td2">(1 hora)</span></div>
+    <button class="btn off" id="btn1" onclick="goStep(2)" style="margin-top:8px">Próximo →</button>
+  </div>
+  <div id="s2" class="card hd">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div class="sec" style="margin:0" id="s2-title">Escolha a data e horário</div>
+      <div class="cal-nav">
+        <button onclick="prevM()">‹</button>
+        <span id="cal-lbl" style="font-size:13px;font-weight:700;min-width:110px;text-align:center"></span>
+        <button onclick="nextM()">›</button>
+      </div>
+    </div>
+    <div id="cal"></div>
+    <div id="tw" class="hd" style="margin-top:16px">
+      <div id="tl" style="font-size:13px;font-weight:700;color:#6b7280;margin-bottom:8px"></div>
+      <div id="times" class="times"></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="back" id="btn-back2" onclick="goStep(1)">← Voltar</button>
+      <button class="btn off" id="btn2" onclick="goStep(3)">Próximo →</button>
+    </div>
+  </div>
+  <div id="s3" class="card hd">
+    <div class="sec" id="s3-title">Preencha seus dados</div>
+    <div class="info" id="ibar"></div>
+    <div class="frow">
+      <div><label>Nome da Escola *</label><input id="fi-school" placeholder="Ex: Colégio São Paulo"></div>
+      <div><label>Nome do Responsável *</label><input id="fi-contact" placeholder="Ex: João Silva"></div>
+      <div><label>E-mail *</label><input id="fi-email" type="email" placeholder="joao@escola.com.br"></div>
+      <div><label>Telefone/WhatsApp *</label><input id="fi-phone" placeholder="(11) 99999-0000"></div>
+      <div><label>Outros participantes (opcional)</label><input id="fi-guests" placeholder="e-mails separados por vírgula"></div>
+    </div>
+    <div id="ferr" class="err">Preencha todos os campos obrigatórios.</div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="back" onclick="goStep(2)">← Voltar</button>
+      <button class="btn" id="btn3" onclick="confirmar()">✓ Confirmar agendamento</button>
+    </div>
+  </div>
+  <div id="succ" class="success hd">
+    <div style="font-size:44px;margin-bottom:10px" id="succ-icon">✅</div>
+    <div style="font-size:18px;font-weight:800;color:#057a55;margin-bottom:6px" id="succ-title">Reunião agendada com sucesso!</div>
+    <div id="sd" style="color:#6b7280;font-size:14px"></div>
+    <p style="margin-top:6px;color:#6b7280;font-size:13px">Você receberá um convite no e-mail em breve.</p>
+    <button class="btn" style="margin-top:16px" onclick="location.href=location.pathname" id="succ-btn">Novo agendamento</button>
+  </div>
+</div>
+<script>
+var SBT={"mt1":[{"day":1,"time":"09:30"},{"day":1,"time":"14:30"},{"day":2,"time":"09:00"},{"day":2,"time":"14:30"},{"day":3,"time":"09:30"},{"day":3,"time":"14:30"},{"day":4,"time":"09:00"},{"day":4,"time":"14:30"},{"day":5,"time":"09:30"},{"day":5,"time":"14:00"}],"mt2":[{"day":1,"time":"09:30"},{"day":1,"time":"14:30"},{"day":2,"time":"09:00"},{"day":2,"time":"14:30"},{"day":3,"time":"09:30"},{"day":3,"time":"14:30"},{"day":4,"time":"09:00"},{"day":4,"time":"14:30"},{"day":5,"time":"09:30"},{"day":5,"time":"14:00"}]};
+var WV="https://n8n.clipescola.com.br/webhook/verificar-csm",WA="https://n8n.clipescola.com.br/webhook/agendar-csm",WR="https://n8n.clipescola.com.br/webhook/reagendar-csm";
+var CSM_N="Davi Morais",CSM_E="davimorais.clipescola@gmail.com",CSM_ICS="https://calendar.google.com/calendar/ical/davimorais.clipescola%40gmail.com/private-1ccf5f12744f25f3550b7c92bccf36b2/basic.ics",SHEET="1rwNkmBUlOjfUHbIbHpyHiLfou8tYyJfQbZtz0dwjgwA";
+var cy=new Date().getFullYear(),cm=new Date().getMonth();
+var selDate="",selTime="",typeId="",typeName="",typeDur=0,oldEventId="",isRe=false;
+var MONTHS=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+var DS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+var DL=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+function fD(m){var h=Math.floor(m/60),r=m%60;return r?h+"h"+r+"min":h+" hora"+(h>1?"s":"")}
+function aM(t,m){var p=t.split(":"),v=+p[0]*60+ +p[1]+m;return ("0"+Math.floor(v/60)).slice(-2)+":"+("0"+(v%60)).slice(-2)}
+
+// Lê URL params para reagendamento
+(function(){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get("reschedule")==="1"){
+    isRe=true; oldEventId=p.get("eventId")||"";
+    var mt=p.get("meetingType")||"";
+    // Pré-seleciona o tipo pelo nome
+    document.querySelectorAll(".tc").forEach(function(el){
+      if(el.querySelector(".tn").textContent===mt){ el.classList.add("sl"); }
+    });
+    // Descobre id/dur do tipo
+    Object.keys(SBT).forEach(function(id){
+      var el=document.getElementById("tc-"+id);
+      if(el&&el.querySelector(".tn").textContent===mt){ typeId=id; typeName=mt; }
+    });
+    // Tenta pegar duração do data-dur
+    var tc=document.querySelector(".tc.sl");
+    if(tc){ typeDur=+tc.getAttribute("data-dur")||60; }
+    // Preenche campos
+    ["school","contact","email","phone","guests"].forEach(function(k){
+      var el=document.getElementById("fi-"+k);if(el)el.value=decodeURIComponent(p.get(k)||"");
+    });
+    document.getElementById("re-banner").classList.remove("hd");
+    document.getElementById("s2-title").textContent="Escolha a nova data e horário";
+    document.getElementById("s3-title").textContent="Confirme seus dados";
+    document.getElementById("btn3").textContent="🔄 Confirmar reagendamento";
+    document.getElementById("btn-back2").classList.add("hd");
+    document.getElementById("succ-icon").textContent="🔄";
+    document.getElementById("succ-title").textContent="Reunião reagendada com sucesso!";
+    document.getElementById("succ-btn").style.display="none";
+    goStep(2);
+  }
+})();
+
+function pickType(id,dur,name){
+  document.querySelectorAll(".tc").forEach(function(e){e.classList.remove("sl")});
+  var el=document.getElementById("tc-"+id);if(el)el.classList.add("sl");
+  typeId=id;typeDur=dur;typeName=name;
+  document.getElementById("btn1").classList.remove("off");
+}
+function goStep(n){
+  ["s1","s2","s3","succ"].forEach(function(s){document.getElementById(s).classList.add("hd")});
+  document.getElementById("s"+n).classList.remove("hd");
+  if(n===2)renderCal();
+  if(n===3){
+    var dt=new Date(selDate+"T12:00:00");
+    document.getElementById("ibar").textContent="📅 "+DL[dt.getDay()]+", "+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+dt.getFullYear()+" às "+selTime+" · "+typeName+" · "+fD(typeDur)+" · com Davi Morais";
+  }
+}
+function renderCal(){
+  document.getElementById("cal-lbl").textContent=MONTHS[cm].charAt(0).toUpperCase()+MONTHS[cm].slice(1)+" "+cy;
+  var slots=SBT[typeId]||[];
+  var wds=[...new Set(slots.map(function(s){return s.day}))];
+  var today=new Date();today.setHours(0,0,0,0);
+  var first=new Date(cy,cm,1).getDay(),days=new Date(cy,cm+1,0).getDate();
+  var h="<div class='cal'>";
+  DS.forEach(function(d){h+="<div style='text-align:center;font-size:11px;font-weight:700;color:#6b7280;padding:4px 0'>"+d+"</div>"});
+  for(var i=0;i<first;i++)h+="<div></div>";
+  for(var d=1;d<=days;d++){
+    var dt=new Date(cy,cm,d);
+    var iso=cy+"-"+("0"+(cm+1)).slice(-2)+"-"+("0"+d).slice(-2);
+    var isT=dt.getTime()===today.getTime();
+    var av=wds.indexOf(dt.getDay())>=0&&dt>=today;
+    var cls="cc"+(iso===selDate?" sl":isT?" td":av?" av":" em");
+    var oc=av?"onclick="pickDate('"+iso+"',"+dt.getDay()+")"":"";
+    h+="<div class='"+cls+"' "+oc+">"+d+"</div>";
+  }
+  h+="</div>";
+  document.getElementById("cal").innerHTML=h;
+  document.getElementById("tw").classList.add("hd");
+}
+function pickDate(iso,dow){
+  selDate=iso;selTime="";
+  document.getElementById("btn2").classList.add("off");
+  renderCal();
+  var tw=document.getElementById("tw");tw.classList.remove("hd");
+  var dt=new Date(iso+"T12:00:00");
+  document.getElementById("tl").textContent="⏳ Verificando disponibilidade...";
+  document.getElementById("times").innerHTML="";
+  var daySlots=(SBT[typeId]||[]).filter(function(s){return s.day===dow});
+  fetch(WV,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({csmEmail:CSM_E,icsUrl:CSM_ICS,date:iso,duration:typeDur,slots:daySlots})})
+  .then(function(r){return r.json()})
+  .then(function(data){renderTimes((data.slots||[]).map(function(s){return s.time}),dt);})
+  .catch(function(){renderTimes(daySlots.map(function(s){return s.time}),dt);});
+}
+function renderTimes(free,dt){
+  document.getElementById("tl").textContent="Horários — "+DL[dt.getDay()]+", "+dt.getDate()+" de "+MONTHS[dt.getMonth()];
+  if(free.length===0){document.getElementById("times").innerHTML="<span style='color:#dc2626;font-size:13px'>Nenhum horário disponível. Escolha outra data.</span>";return;}
+  var h="";
+  free.forEach(function(t){var e=aM(t,typeDur);h+="<div class='ts' onclick="pickTime('"+t+"',this)">"+t+" <span style='font-size:11px;opacity:.7'>até "+e+"</span></div>";});
+  document.getElementById("times").innerHTML=h;
+}
+function pickTime(t,el){selTime=t;document.querySelectorAll(".ts").forEach(function(e){e.classList.remove("sl")});el.classList.add("sl");document.getElementById("btn2").classList.remove("off");}
+function prevM(){cm--;if(cm<0){cm=11;cy--;}renderCal();}
+function nextM(){cm++;if(cm>11){cm=0;cy++;}renderCal();}
+function confirmar(){
+  var s=document.getElementById("fi-school").value.trim(),c=document.getElementById("fi-contact").value.trim(),e=document.getElementById("fi-email").value.trim(),p=document.getElementById("fi-phone").value.trim(),g=document.getElementById("fi-guests").value.trim();
+  var er=document.getElementById("ferr");
+  if(!s||!c||!e||!p){er.style.display="block";return;}
+  er.style.display="none";
+  var btn=document.getElementById("btn3");btn.disabled=true;btn.textContent="Aguarde...";
+  var payload={csm:CSM_N,csmEmail:CSM_E,icsUrl:CSM_ICS,sheetId:SHEET,date:selDate,time:selTime,endTime:aM(selTime,typeDur),meetingType:typeName,duration:typeDur,school:s,contact:c,email:e,phone:p,guests:g};
+  if(isRe) payload.oldEventId=oldEventId;
+  fetch(isRe?WR:WA,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
+  .then(function(){
+    ["s1","s2","s3"].forEach(function(x){document.getElementById(x).classList.add("hd")});
+    document.getElementById("re-banner").classList.add("hd");
+    document.getElementById("succ").classList.remove("hd");
+    var dt=new Date(selDate+"T12:00:00");
+    document.getElementById("sd").innerHTML="<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>📅 "+dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" às "+selTime+" · ⏱ "+fD(typeDur);
+  }).catch(function(){er.textContent="Erro ao enviar. Tente novamente.";er.style.display="block";btn.disabled=false;btn.textContent=isRe?"🔄 Confirmar reagendamento":"✓ Confirmar agendamento";});
+}
+</script>
+</body>
+</html>
