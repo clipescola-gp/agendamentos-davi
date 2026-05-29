@@ -138,6 +138,9 @@ var SBT = {
   mt2:[{day:1,time:"09:30"},{day:1,time:"14:30"},{day:2,time:"09:00"},{day:2,time:"14:30"},{day:3,time:"09:30"},{day:3,time:"14:30"},{day:4,time:"09:00"},{day:4,time:"14:30"},{day:5,time:"09:30"},{day:5,time:"14:00"}]
 };
 
+// Guarda os dias livres do mes atual para re-render apos pickDate
+var currentFreeDays = {};
+
 var cy = new Date().getFullYear();
 var cm = new Date().getMonth();
 var selDate = "", selTime = "", typeId = "", typeName = "", typeDur = 0;
@@ -210,6 +213,7 @@ function checkAndRenderMonth(){
 }
 
 function renderCal(freeDays){
+  currentFreeDays = freeDays || {};
   document.getElementById("cal-lbl").textContent = MONTHS[cm].charAt(0).toUpperCase()+MONTHS[cm].slice(1)+" "+cy;
   var first = new Date(cy,cm,1).getDay();
   var days  = new Date(cy,cm+1,0).getDate();
@@ -231,9 +235,10 @@ function renderCal(freeDays){
     var dt  = new Date(cy,cm,d);
     var iso = cy+"-"+pad(cm+1)+"-"+pad(d);
     var isT = dt.getTime()===today.getTime();
-    var av  = freeDays && freeDays[iso];
+    var av  = currentFreeDays[iso] === true;
+    var sel = iso === selDate;
     var cell = document.createElement("div");
-    cell.className = "cc" + (iso===selDate?" sl" : isT?" td2" : av?" av" : " em");
+    cell.className = "cc" + (sel?" sl" : isT&&!av?" td2" : av?" av" : " em");
     cell.textContent = d;
     if(av){
       (function(iso2, dow){
@@ -251,9 +256,8 @@ function renderCal(freeDays){
 function pickDate(iso, dow){
   selDate = iso; selTime = "";
   document.getElementById("btn2").disabled = true;
-  document.querySelectorAll(".cc").forEach(function(c){ c.classList.remove("sl"); });
-  renderCal._lastFreeDays && renderCal._lastFreeDays[iso] && null;
-
+  // Re-renderiza o calendário para marcar o dia selecionado
+  renderCal(currentFreeDays);
   document.getElementById("tw").classList.remove("hd");
   var dt = new Date(iso+"T12:00:00");
   document.getElementById("tl").textContent = "Carregando horarios...";
@@ -318,26 +322,29 @@ function confirmar(){
   .then(function(resp){
     show("succ");
     var dt = new Date(selDate+"T12:00:00");
-    var extra = "";
+    var meetLinkEl = "";
     if(resp && resp.meetLink){
-      var ml = resp.meetLink;
-      extra = "<div class='meet-box'>"
-        +"<div class='meet-box-title'>Link da reuniao</div>"
-        +"<div class='meet-row'>"
-        +"<span class='meet-link'>"+ml+"</span>"
-        +"<button class='copy-btn' id='copy-btn'>Copiar</button>"
-        +"</div></div>";
+      meetLinkEl = "<div class='meet-box'>"
+        + "<div class='meet-box-title'>Link da reuniao</div>"
+        + "<div class='meet-row'>"
+        + "<span class='meet-link' id='meet-url'>" + resp.meetLink + "</span>"
+        + "<button class='copy-btn' id='copy-btn'>Copiar</button>"
+        + "</div></div>";
     }
     document.getElementById("sd").innerHTML =
-      "<strong>"+typeName+"</strong> com <strong>"+CSM_N+"</strong><br>"
-      +dt.getDate()+" de "+MONTHS[dt.getMonth()]+" de "+cy+" as "+selTime+" - "+fD(typeDur)
-      +extra;
+      "<strong>" + typeName + "</strong> com <strong>" + CSM_N + "</strong><br>"
+      + dt.getDate() + " de " + MONTHS[dt.getMonth()] + " de " + cy + " as " + selTime + " - " + fD(typeDur)
+      + meetLinkEl;
     var cb = document.getElementById("copy-btn");
-    if(cb){
+    var ml = resp.meetLink;
+    if(cb && ml){
       cb.addEventListener("click", function(){
-        navigator.clipboard.writeText(resp.meetLink).then(function(){
+        navigator.clipboard.writeText(ml).then(function(){
           cb.textContent = "Copiado!";
           setTimeout(function(){ cb.textContent = "Copiar"; }, 2000);
+        }).catch(function(){
+          var el = document.getElementById("meet-url");
+          if(el){ var range = document.createRange(); range.selectNode(el); window.getSelection().removeAllRanges(); window.getSelection().addRange(range); }
         });
       });
     }
